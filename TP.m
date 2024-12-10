@@ -215,7 +215,7 @@ pourcentages = containers.Map(myKeys, myValues);
 for j = 1:Q
     I = imread(['base_test\test_' num2str(j) '.png']);
     
-    I_chiffres = diviser(I, false);
+    I_chiffres = diviser(I, false, false);
     N = length(I_chiffres);
 
     figure;
@@ -275,3 +275,67 @@ disp(['Taux d-erreur distance de Manhattan - Voisin : ' num2str(round(taux_erreu
 disp(['Taux d-erreur distance Euclidienne - Voisin : ' num2str(round(taux_erreur_norme2_voi*100, 2)) '%']);
 disp(['Taux d-erreur distance de Manhattan - Barycentre : ' num2str(round(taux_erreur_norme1_bar*100, 2)) '%']);
 disp(['Taux d-erreur distance Euclidienne - Barycentre : ' num2str(round(taux_erreur_norme2_bar*100, 2)) '%']);
+
+%% Corrélation
+
+clear;
+close all;
+clc;
+
+Q = 10;
+
+for j = 1:Q
+    I_test = imread(['base_test\test_' num2str(j) '.png']);
+
+    I_chiffres = diviser(I_test, false, true);
+    N = length(I_chiffres);
+
+    figure
+    subplot(2, 3, 1);
+    imshow(I_test);
+    title('Image originale');
+    for i = 1:N
+        I_chiffre = cell2mat(I_chiffres(i));
+
+        prediction = ReconnaissanceCorrelation(I_chiffre);
+
+        subplot(2, 3, i+1);
+        imshow(I_chiffre);
+        title(['Prediction : ' num2str(prediction)]);
+    end
+end
+
+taux_erreur = 0/50;
+
+disp(['Taux d-erreur : ' num2str(round(taux_erreur*100, 2)) '%']);
+
+%% Crop
+
+clear;
+close all;
+clc;
+
+I = imread('base_test\test_1.png');
+s = size(I);
+J1 = imcrop(I, [0 0 55-0 s(2)]);
+J2 = imcrop(I, [55 0 115-55 s(2)]);
+J3 = imcrop(I, [115 0 190-115 s(2)]);
+J4 = imcrop(I, [190 0 260-190 s(2)]);
+J5 = imcrop(I, [260 0 315-260 s(2)]);
+figure
+imshow(J1)
+figure
+imshow(J2)
+figure
+imshow(J3)
+figure
+imshow(J4)
+figure
+imshow(J5)
+
+% imwrite(J1, 'base_apprentissage\neuf_1.jpg');
+% imwrite(J2, 'base_apprentissage\neuf_2.jpg');
+% imwrite(J3, 'base_apprentissage\neuf_3.jpg');
+% imwrite(J4, 'base_apprentissage\neuf_4.jpg');
+% imwrite(J5, 'base_apprentissage\neuf_5.jpg');
+
