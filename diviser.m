@@ -1,4 +1,4 @@
-function I_chiffres = diviser(I, pretraitement)    
+function I_chiffres = diviser(I, pretraitement, ndg)
     I_ndg = rgb2gray(I);
     I_bin = ~imbinarize(I_ndg);
 
@@ -19,6 +19,9 @@ function I_chiffres = diviser(I, pretraitement)
         [r_min, r_max, c_min, c_max] = deal(min(r), max(r), min(c), max(c));
         
         espace_au_bord = 10;
+        if ndg
+            espace_au_bord = 0;
+        end
         % Elargir à gauche
         for k = 1:espace_au_bord
             if c_min == 1
@@ -35,7 +38,11 @@ function I_chiffres = diviser(I, pretraitement)
         end
         
         % Les différents chiffres isolés
-        I_chiffre_recadre = I_chiffre(r_min:r_max, c_min:c_max);
+        if ndg
+            I_chiffre_recadre = I_ndg(r_min:r_max, c_min:c_max);
+        else
+            I_chiffre_recadre = I_chiffre(r_min:r_max, c_min:c_max);
+        end
         index = length(I_chiffres) + 1;
         I_chiffres{index} = I_chiffre_recadre;
         

@@ -26,7 +26,7 @@ function [Cavites, Pourcentages] = Reconnaissance()
     for j = 1:M
         I = imread(['base_apprentissage\chiffre_' num2str(j-1) '.png']);
         
-        I_chiffres = diviser(I, false);
+        I_chiffres = diviser(I, false, false);
         N = length(I_chiffres);
     
         % P == N == 5
