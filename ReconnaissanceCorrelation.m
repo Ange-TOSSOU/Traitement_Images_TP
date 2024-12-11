@@ -5,7 +5,7 @@ function [prediction] = ReconnaissanceCorrelation(I_test)
     % j = Les 10 images
     pic = 0;
     for j = 1:M
-        I = imread(['base_apprentissage\chiffre_' num2str(j-1) '.png']);
+        I = imread(['base_apprentissage/chiffre_' num2str(j-1) '.png']);
         I_ndg = rgb2gray(I);
 
         i_test_size = size(I_test);

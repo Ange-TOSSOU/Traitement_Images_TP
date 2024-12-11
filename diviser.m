@@ -3,12 +3,13 @@ function I_chiffres = diviser(I, pretraitement, ndg)
     I_bin = ~imbinarize(I_ndg);
 
     if pretraitement
-        I_bin_dila = imdilate(I_bin, strel("disk", 3));
-        I_bin_dila_erode = imerode(I_bin_dila, strel("disk", 3));
-        I_bin = I_bin_dila_erode;
+        I_binw = bwareaopen(I_bin, 50);
+        I_binw_dila = imdilate(I_binw, strel("disk", 5));
+        I_binw_dila_erode = imerode(I_binw_dila, strel("disk", 3));
+        I_bin = I_binw_dila_erode;
     end
 
-    chemin = 'images\';
+    chemin = 'images/';
     I_chiffres = [];
 
     [L, N] = bwlabel(I_bin);

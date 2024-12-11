@@ -219,7 +219,7 @@ myValues = {0, 0, 0, 0, 0};
 pourcentages = containers.Map(myKeys, myValues);
 
 for j = 1:Q
-    I = imread(['base_test\test_' num2str(j) '.png']);
+    I = imread(['base_test/test_' num2str(j) '.png']);
     
     % Récupération des chiffres de l'image de manière isolée
     I_chiffres = diviser(I, false, false);
@@ -292,11 +292,12 @@ clear;
 close all;
 clc;
 
-Q = 10;
+Q = 1; % Le nombre d'images de test
 
 for j = 1:Q
-    I_test = imread(['base_test\test_' num2str(j) '.png']);
+    I_test = imread(['base_test/test_' num2str(j) '.png']);
 
+    % Récupération des chiffres de l'image de manière isolée
     I_chiffres = diviser(I_test, false, true);
     N = length(I_chiffres);
 
@@ -317,35 +318,88 @@ end
 
 taux_erreur = 0/50;
 
-disp(['Taux d-erreur : ' num2str(round(taux_erreur*100, 2)) '%']);
+disp(['Taux d-erreur  : ' num2str(round(taux_erreur*100, 2)) '%']);
 
-%% Crop
+%% Test grandeur nature
+% Limites de la corrélation
 
 clear;
 close all;
 clc;
 
-I = imread('base_test\test_1.png');
-s = size(I);
-J1 = imcrop(I, [0 0 55-0 s(2)]);
-J2 = imcrop(I, [55 0 115-55 s(2)]);
-J3 = imcrop(I, [115 0 190-115 s(2)]);
-J4 = imcrop(I, [190 0 260-190 s(2)]);
-J5 = imcrop(I, [260 0 315-260 s(2)]);
-figure
-imshow(J1)
-figure
-imshow(J2)
-figure
-imshow(J3)
-figure
-imshow(J4)
-figure
-imshow(J5)
+I = imread('images/code_postal_acquisition.jpg');
 
-% imwrite(J1, 'base_apprentissage\neuf_1.jpg');
-% imwrite(J2, 'base_apprentissage\neuf_2.jpg');
-% imwrite(J3, 'base_apprentissage\neuf_3.jpg');
-% imwrite(J4, 'base_apprentissage\neuf_4.jpg');
-% imwrite(J5, 'base_apprentissage\neuf_5.jpg');
+[Cavites, Pourcentages] = Reconnaissance();
+
+% Initialisation du vecteur des cavités pour un seul chiffre
+myKeys = ["est" "sud" "ouest" "nord" "central"];
+myValues = {0, 0, 0, 0, 0};
+pourcentages = containers.Map(myKeys, myValues);
+
+% Récupération des chiffres de l'image de manière isolée
+I_chiffres = diviser(I, true, false);
+
+N = length(I_chiffres);
+
+debut = 0;
+code_postal_prediction = [0 0 0 0 0];
+
+for i = 1:N
+    % Récupération des cavités du chiffre
+    I_chiffres_mat = cell2mat(I_chiffres(i));
+    [~, I_cavites] = cavite(I_chiffres_mat);
+
+    % Calcul de la somme des surfaces des cavités
+    taux_total_cavites = 0;
+    for k = keys(I_cavites)
+        taux_total_cavites = taux_total_cavites + sum(I_cavites(k{1}), 'all');
+    end
+
+    for k = keys(I_cavites)
+        % Normalisation des cavités
+        taux_cavite = 0;
+        if taux_total_cavites ~= 0
+            taux_cavite = sum(I_cavites(k{1}), 'all') / taux_total_cavites;
+        end
+        pourcentages(k{1}) = taux_cavite;
+    end
+
+    prediction1 = choix_voisin(Cavites, pourcentages, 10, 5, 1);
+    code_postal_prediction(1) = code_postal_prediction(1)*10*debut + prediction1;
+
+    prediction2 = choix_voisin(Cavites, pourcentages, 10, 5, 2);
+    code_postal_prediction(2) = code_postal_prediction(2)*10*debut + prediction2;
+
+    prediction3 = choix_barycentre(Pourcentages, pourcentages, 10, 1);
+    code_postal_prediction(3) = code_postal_prediction(3)*10*debut + prediction3;
+
+    prediction4 = choix_barycentre(Pourcentages, pourcentages, 10, 2);
+    code_postal_prediction(4) = code_postal_prediction(4)*10*debut + prediction4;
+
+    debut = 1;
+end
+
+debut = 0;
+for i = 1:N
+    I_chiffre = cell2mat(I_chiffres(i));
+
+    prediction = ReconnaissanceCorrelation(I_chiffre);
+
+    code_postal_prediction(5) = code_postal_prediction(5)*10*debut + prediction;
+
+    debut = 1;
+end
+
+figure
+subplot(2, 1, 1)
+imshow(I);
+title('Code postal à prédire');
+
+start = 800;
+gap = 100;
+text(0, start + 0*gap, ['Plus proche voisin - Manhattan : ' num2str(code_postal_prediction(1))], 'Fontsize',20, 'Color','blue');
+text(0, start + 1*gap, ['Plus proche voisin - Euclidienne : ' num2str(code_postal_prediction(2))], 'Fontsize',20, 'Color','blue');
+text(0, start + 2*gap, ['Plus proche barycentre - Manhattan : ' num2str(code_postal_prediction(3))], 'Fontsize',20, 'Color','blue');
+text(0, start + 3*gap, ['Plus proche barycentre - Euclidienne : ' num2str(code_postal_prediction(4))], 'Fontsize',20, 'Color','blue');
+text(0, start + 4*gap, ['Approche par corrélation : ' num2str(code_postal_prediction(5))], 'Fontsize',20, 'Color','blue');
 
