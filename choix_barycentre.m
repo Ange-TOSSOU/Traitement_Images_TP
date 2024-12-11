@@ -1,4 +1,5 @@
 function chiffre = choix_barycentre(Pourcentages, pourcentages, M, p)
+    % Isobarycentre
     norme_chiffres = zeros(1, M);
     for i = 1:M
         a = [];

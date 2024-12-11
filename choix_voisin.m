@@ -1,4 +1,5 @@
 function chiffre = choix_voisin(Cavites, pourcentages, M, P, p)
+    % Plus proche voisin
     ancienne_norme = 0;
     for i = 1:M
         for j = 1:P

@@ -2,14 +2,11 @@ clear;
 close all;
 clc;
 
-% Partie 1
 
-% I- Acquisition
-
-% II- Prétraitement
-
-% 2- Lire l'image et la convertir en niveaux de gris
+% 1- Lire l'image
 I = imread('images/code_postal_acquisition.jpg');
+
+% 2- Conversion en niveaux de gris
 I_ndg = rgb2gray(I);
 
 figure;
@@ -21,8 +18,10 @@ imshow(I_ndg);
 title('Image en niveaux de gris');
 
 % 3- Binariser l'image
+% Choisir le seuil de binarisation en analysant l'histogramme
 figure;
 imhist(I_ndg);
+title("Histogramme de l'image en niveau de gris");
 
 figure
 subplot(2, 2, 1);
@@ -73,9 +72,7 @@ I_binw_dila_erode = imerode(I_binw_dila, strel("disk", 3));
 imshow(I_binw_dila_erode);
 title('Image érodée');
 
-% III- Localisation des chiffres du code postal
-
-% 5-
+% 5- Détermination du nombre de régions
 figure;
 imshow(I_binw_dila_erode);
 impixelinfo;
@@ -85,16 +82,16 @@ for i = 1:N
     I_chiffre = label2rgb(L);
     imshow(I_chiffre);
 end
+title([num2str(N) ' régions']);
 
-% 6-
-chemin = 'images\';
+% 6- Isolation des chiffres du code postal
+chemin = 'images/';
 figure;
 imshow(I_binw_dila_erode);
 impixelinfo;
 
 I_chiffres = [];
 
-[L, N] = bwlabel(I_binw_dila_erode);
 for i = 1:N
     I_chiffre = L==i;
     [r_sup, c_sup] = size(I_chiffre);
@@ -130,11 +127,17 @@ for i = 1:N
     imwrite(I_chiffre_recadre, fichier_image);
 end
 
-% 7-
+% 7- Dilatation en utilisant des éléments structurants ligne et colonne
+% 8- Voir la fonction cavite.m
+% 10- Cavité Nord : intersection des dilatations nord, est et ouest privée de la dilatation sud et des pixels appartenant au chiffre
+%     Cavité Est : intersection des dilatations nord, est et sud privée de la dilatation ouest et des pixels appartenant au chiffre
+%     Cavité Sud : intersection des dilatations est, sud et ouest privée de la dilatation nord et des pixels appartenant au chiffre
+%     Cavité Ouest : intersection des dilatations nord, sud et ouest privée de la dilatation est et des pixels appartenant au chiffre
+%     Cavité Centrale : intersection de toutes les dilatations privée des pixels appartenant au chiffre
+% Voir la fonction cavite.m pour l'implémentation
+% 11-12 Voir la fonction cavite.m
+% 9-13 Voir le code ci-dessous
 
-% TO DO
-
-% 9-
 
 N = length(I_chiffres);
 for i = 1:N
@@ -183,6 +186,7 @@ M = 10; % Les 10 images
 P = 5;
 
 for j = 1:M
+    % Afficher tous les taux des cavités pource chiffre
     for i = 1:P
         to_print = [num2str(j-1) ' :'];
         for k = keys(Cavites)
@@ -194,6 +198,7 @@ for j = 1:M
         disp(to_print);
     end
 
+    % Afficher la moyenne des cavités
     to_print = ['M :' ' '];
     for k = keys(Pourcentages)
         objet = Pourcentages(k{1});
@@ -204,10 +209,11 @@ for j = 1:M
     disp('   ----');
 end
 
-% 16-
+% 16- Reconnaissance des chiffres de la base de test
 
-Q = 10;
+Q = 10; % Le nombre d'images de test
 
+% Initialisation du vecteur des cavités pour un seul chiffre
 myKeys = ["est" "sud" "ouest" "nord" "central"];
 myValues = {0, 0, 0, 0, 0};
 pourcentages = containers.Map(myKeys, myValues);
@@ -215,20 +221,24 @@ pourcentages = containers.Map(myKeys, myValues);
 for j = 1:Q
     I = imread(['base_test\test_' num2str(j) '.png']);
     
+    % Récupération des chiffres de l'image de manière isolée
     I_chiffres = diviser(I, false, false);
     N = length(I_chiffres);
 
     figure;
     for i = 1:N
+        % Récupération des cavités du chiffre
         I_chiffres_mat = cell2mat(I_chiffres(i));
         [~, I_cavites] = cavite(I_chiffres_mat);
 
+        % Calcul de la somme des surfaces des cavités
         taux_total_cavites = 0;
         for k = keys(I_cavites)
             taux_total_cavites = taux_total_cavites + sum(I_cavites(k{1}), 'all');
         end
     
         for k = keys(I_cavites)
+            % Normalisation des cavités
             taux_cavite = 0;
             if taux_total_cavites ~= 0
                 taux_cavite = sum(I_cavites(k{1}), 'all') / taux_total_cavites;
@@ -237,32 +247,32 @@ for j = 1:Q
         end
 
         % Norme 1 - Classifieur du plus proche voisin
-        chiffre3 = choix_voisin(Cavites, pourcentages, M, P, 1);
+        prediction1 = choix_voisin(Cavites, pourcentages, M, P, 1);
 
         % Norme 2 - Classifieur du plus proche voisin
-        chiffre4 = choix_voisin(Cavites, pourcentages, M, P, 2);
+        prediction2 = choix_voisin(Cavites, pourcentages, M, P, 2);
 
         % Norme 1 - Classifieur du plus proche barycentre
-        chiffre1 = choix_barycentre(Pourcentages, pourcentages, M, 1);
+        prediction3 = choix_barycentre(Pourcentages, pourcentages, M, 1);
 
         % Norme 2 - Classifieur du plus proche barycentre
-        chiffre2 = choix_barycentre(Pourcentages, pourcentages, M, 2);
+        prediction4 = choix_barycentre(Pourcentages, pourcentages, M, 2);
 
         subplot(4, N, i);
         imshow(I_chiffres_mat);
-        title(['Manhattan - Voisin : ' num2str(chiffre3)]);
+        title(['Manhattan - Voisin : ' num2str(prediction1)]);
 
         subplot(4, N, i+N);
         imshow(I_chiffres_mat);
-        title(['Euclide - Voisin : ' num2str(chiffre4)]);
+        title(['Euclide - Voisin : ' num2str(prediction2)]);
 
         subplot(4, N, i+2*N);
         imshow(I_chiffres_mat);
-        title(['Manhattan - Barycentre : ' num2str(chiffre1)]);
+        title(['Manhattan - Barycentre : ' num2str(prediction3)]);
 
         subplot(4, N, i+3*N);
         imshow(I_chiffres_mat);
-        title(['Euclide - Barycentre : ' num2str(chiffre2)]);
+        title(['Euclide - Barycentre : ' num2str(prediction4)]);
     end
 end
 
